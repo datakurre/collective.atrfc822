@@ -44,15 +44,28 @@ from zope.interface import alsoProvides
 
 
 def iterFields(ob):
+    primary = ob.getPrimaryField()
+    if primary:
+        clone = primary.copy()
+        alsoProvides(clone, IPrimaryField)
+        yield clone.__name__, clone
+
     for name in ob.schema.getSchemataNames():
         for field in ob.schema.getSchemataFields(name):
+            if field.__name__ == primary.__name__:
+                continue
+
             clone = field.copy()
+
             # Mark 'primary fields', which get marshaled into payload
-            if (bool(getattr(field, 'primary', None))
+            if (bool(getattr(field, 'primary', None)) is True
+                    or IBlobField.providedBy(field)
+                    or (IFileField.providedBy(field)
+                        and not ITextField.providedBy(field))
                     or getattr(field, 'widget', None) == RichWidget
-                    or IFileField.providedBy(field)
                     or isinstance(field, ZPTField)):
                 alsoProvides(clone, IPrimaryField)
+
             yield clone.__name__, clone
 
 
