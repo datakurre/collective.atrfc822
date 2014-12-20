@@ -52,7 +52,7 @@ def iterFields(ob):
 
     for name in ob.schema.getSchemataNames():
         for field in ob.schema.getSchemataFields(name):
-            if field.__name__ == primary.__name__:
+            if primary and primary.__name__ == field.__name__:
                 continue
 
             clone = field.copy()
