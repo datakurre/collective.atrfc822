@@ -2,15 +2,17 @@
 from datetime import datetime
 
 from DateTime.DateTime import DateTime
-
+from OFS.Image import Pdata
+from Products.Archetypes.Widget import RichWidget
 from Products.TALESField import TALESString
+from Products.TemplateFields import ZPTField
+
 from plone import api
 from plone.app.blob.interfaces import IBlobField
 from plone.app.blob.interfaces import IBlobImageField
 from plone.namedfile.marshaler import NamedFileFieldMarshaler
 from plone.namedfile.marshaler import NamedImageFieldMarshaler
 from plone.uuid.interfaces import IUUID
-from zope import schema
 from Products.Archetypes.interfaces import IStringField
 from Products.Archetypes.interfaces import IReferenceField
 from Products.Archetypes.interfaces import IFileField
@@ -42,14 +44,16 @@ from zope.interface import alsoProvides
 
 
 def iterFields(ob):
-    primary = ob.getPrimaryField()
-    if primary is not None:
-        field = primary.copy()
-        alsoProvides(field, IPrimaryField)
-        yield field.__name__, field
     for name in ob.schema.getSchemataNames():
         for field in ob.schema.getSchemataFields(name):
-            yield field.__name__, field.copy()
+            clone = field.copy()
+            # Mark 'primary fields', which get marshaled into payload
+            if (bool(getattr(field, 'primary', None))
+                    or getattr(field, 'widget', None) == RichWidget
+                    or IFileField.providedBy(field)
+                    or isinstance(field, ZPTField)):
+                alsoProvides(clone, IPrimaryField)
+            yield clone.__name__, clone
 
 
 class ATBaseFieldMarshaler(BaseFieldMarshaler):
@@ -72,6 +76,7 @@ class ATBaseFieldMarshaler(BaseFieldMarshaler):
 @configure.adapter.factory(for_=(Interface, IIntegerField))
 @configure.adapter.factory(for_=(Interface, IFloatField))
 @configure.adapter.factory(for_=(Interface, TALESString))
+@configure.adapter.factory(for_=(Interface, ZPTField))
 @implementer(IFieldMarshaler)
 class ATFieldMarshaler(BytesFieldMarshaler, ATBaseFieldMarshaler):
     def _query(self, default=None):
@@ -131,20 +136,23 @@ class ATFileFieldMarshaler(NamedFileFieldMarshaler, ATBaseFieldMarshaler):
     def _query(self, default=None):
         value = super(ATFileFieldMarshaler, self)._query(default=default)
         if value:
-            if isinstance(value.getFilename(), str):
-                filename = value.getFilename().decode('utf-8')
+            filename = value.getFilename() or self.field.getFilename(value)
+            if isinstance(filename, str):
+                filename = filename.decode('utf-8')
+            if isinstance(value.data, Pdata):
+                return self.factory(
+                    value.data.data, value.getContentType(), filename)
             else:
-                filename = value.getFilename()
-            return self.factory(value.data, value.getContentType(), filename)
+                return self.factory(
+                    value.data, value.getContentType(), filename)
         else:
             return None
 
     def _set(self, value):
         if value:
-            if not isinstance(value.filename, str):
-                filename = value.filename.encode('utf-8')
-            else:
-                filename = value.filename
+            filename = value.filename
+            if not isinstance(filename, str):
+                filename = filename.encode('utf-8')
             super(ATFileFieldMarshaler, self)._set(
                 value.data, mimetype=value.contentType, filename=filename)
         else:
@@ -159,20 +167,23 @@ class ATImageFieldMarshaler(NamedImageFieldMarshaler, ATBaseFieldMarshaler):
     def _query(self, default=None):
         value = super(ATImageFieldMarshaler, self)._query(default=default)
         if value:
-            if isinstance(value.getFilename(), str):
-                filename = value.getFilename().decode('utf-8')
+            filename = value.getFilename() or self.field.getFilename(value)
+            if isinstance(filename, str):
+                filename = filename.decode('utf-8')
+            if isinstance(value.data, Pdata):
+                return self.factory(
+                    value.data.data, value.getContentType(), filename)
             else:
-                filename = value.getFilename()
-            return self.factory(value.data, value.getContentType(), filename)
+                return self.factory(
+                    value.data, value.getContentType(), filename)
         else:
             return None
 
     def _set(self, value):
         if value:
-            if not isinstance(value.filename, str):
-                filename = value.filename.encode('utf-8')
-            else:
-                filename = value.filename
+            filename = value.filename
+            if not isinstance(filename, str):
+                filename = filename.encode('utf-8')
             super(ATImageFieldMarshaler, self)._set(
                 value.data, mimetype=value.contentType, filename=filename)
         else:
@@ -189,7 +200,10 @@ class ATReferenceFieldMarshaler(CollectionMarshaler, ATBaseFieldMarshaler):
 
     def _query(self, default=None):
         value = super(ATReferenceFieldMarshaler, self)._query(default=default)
-        return map(IUUID, value)
+        if value:
+            return value
+        else:
+            return None
 
     def _set(self, value):
         resolved_objects = []
