@@ -83,6 +83,12 @@ class ATBaseFieldMarshaler(BaseFieldMarshaler):
         setter = self.field.getMutator(self.context)
         setter(value)
 
+    def getContentType(self):
+        if hasattr(self.field, 'getContentType'):
+            return self.field.getContentType(self.context)
+        else:
+            return super(ATBaseFieldMarshaler, self).getContentType()
+
 
 @configure.adapter.factory(for_=(Interface, IStringField))
 @configure.adapter.factory(for_=(Interface, ITextField))
