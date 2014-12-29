@@ -106,6 +106,12 @@ class ATFieldMarshaler(BytesFieldMarshaler, ATBaseFieldMarshaler):
         else:
             return value
 
+    def encode(self, value, charset='utf-8', primary=False):
+        if not isinstance(value, str) and hasattr(value, 'encode'):
+            return value.encode('utf-8')
+        else:
+            return value
+
 
 @configure.adapter.factory()
 @adapter(Interface, IFixedPointField)
