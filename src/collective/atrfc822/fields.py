@@ -6,13 +6,11 @@ from OFS.Image import Pdata
 from Products.Archetypes.Widget import RichWidget
 from Products.TALESField import TALESString
 from Products.TemplateFields import ZPTField
-
 from plone import api
 from plone.app.blob.interfaces import IBlobField
 from plone.app.blob.interfaces import IBlobImageField
 from plone.namedfile.marshaler import NamedFileFieldMarshaler
 from plone.namedfile.marshaler import NamedImageFieldMarshaler
-from plone.uuid.interfaces import IUUID
 from Products.Archetypes.interfaces import IStringField
 from Products.Archetypes.interfaces import IReferenceField
 from Products.Archetypes.interfaces import IFileField
