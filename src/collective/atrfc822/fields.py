@@ -75,11 +75,9 @@ class ATBaseFieldMarshaler(BaseFieldMarshaler):
         self.field = field
 
     def _query(self, default=None):
-        getter = self.field.getEditAccessor(self.context)
-        if getter is not None:
-            return getter()
-        else:
-            return default
+        getter = (self.field.getEditAccessor(self.context)
+                  or self.field.getAccessor(self.context))
+        return getter()
 
     def _set(self, value):
         setter = self.field.getMutator(self.context)
