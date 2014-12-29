@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import Acquisition
 
 from DateTime.DateTime import DateTime
 from OFS.Image import Pdata
@@ -43,6 +44,8 @@ from zope.interface import alsoProvides
 
 
 def iterFields(ob):
+    # noinspection PyUnresolvedReferences
+    ob = Acquisition.aq_base(ob)
     primary = ob.getPrimaryField()
     if primary:
         clone = primary.copy()
