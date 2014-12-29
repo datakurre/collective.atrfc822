@@ -3,6 +3,7 @@ from datetime import datetime
 
 from DateTime.DateTime import DateTime
 from OFS.Image import Pdata
+from Products.Archetypes.Field import StringField
 from Products.Archetypes.Widget import RichWidget
 from Products.TALESField import TALESString
 from Products.TemplateFields import ZPTField
@@ -136,7 +137,7 @@ class ATDateTimeFieldMarshaler(DatetimeMarshaler, ATBaseFieldMarshaler):
 class ATLinesFieldMarshaler(CollectionMarshaler, ATBaseFieldMarshaler):
     def __init__(self, context, field):
         super(ATLinesFieldMarshaler, self).__init__(context, field)
-        field.value_type = IStringField
+        field.value_type = StringField()
 
 
 @configure.adapter.factory()
@@ -213,7 +214,7 @@ class ATImageFieldMarshaler(NamedImageFieldMarshaler, ATBaseFieldMarshaler):
 class ATReferenceFieldMarshaler(CollectionMarshaler, ATBaseFieldMarshaler):
     def __init__(self, context, field):
         super(ATReferenceFieldMarshaler, self).__init__(context, field)
-        field.value_type = IStringField
+        field.value_type = StringField()
 
     def _query(self, default=None):
         value = super(ATReferenceFieldMarshaler, self)._query(default=default)
