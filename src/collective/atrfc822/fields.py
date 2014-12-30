@@ -6,8 +6,7 @@ from DateTime.DateTime import DateTime
 from OFS.Image import Pdata
 from Products.Archetypes.Field import StringField
 from Products.Archetypes.Widget import RichWidget
-from Products.TALESField import TALESString
-from Products.TemplateFields import ZPTField
+import pkg_resources
 from plone import api
 from plone.app.blob.interfaces import IBlobField
 from plone.app.blob.interfaces import IBlobImageField
@@ -38,9 +37,38 @@ from zope.interface import implementer
 from zope.interface import alsoProvides
 
 
+try:
+    pkg_resources.get_distribution('Products.TALESField')
+except pkg_resources.DistributionNotFound:
+    class TALESString(object):
+        """Mock placeholder"""
+else:
+    from Products.TALESField import TALESString
+
+
+try:
+    pkg_resources.get_distribution('Products.TemplateFields')
+except pkg_resources.DistributionNotFound:
+    class ZPTField(object):
+        """Mock placeholder"""
+else:
+    from Products.TemplateFields import ZPTField
+
+
 # Usage:
 # message = constructMessage(ob, iterFields(ob))
 # initializeObject(ob, iterFields(ob), message)
+
+
+def cloneField(field):
+    clone = field.copy()
+    if ILinesField.providedBy(clone):
+        clone.missing_value = list()
+    else:
+        clone.missing_value = None
+    clone._type = list  # possible sequence type
+    clone.fromUnicode = lambda x: x
+    return clone
 
 
 def iterFields(ob):
@@ -48,7 +76,7 @@ def iterFields(ob):
     ob = Acquisition.aq_base(ob)
     primary = ob.getPrimaryField()
     if primary:
-        clone = primary.copy()
+        clone = cloneField(primary)
         alsoProvides(clone, IPrimaryField)
         yield clone.__name__, clone
 
@@ -57,7 +85,7 @@ def iterFields(ob):
             if primary and primary.__name__ == field.__name__:
                 continue
 
-            clone = field.copy()
+            clone = cloneField(field)
 
             # Mark 'primary fields', which get marshaled into payload
             if (bool(getattr(field, 'primary', None)) is True
@@ -236,7 +264,7 @@ class ATReferenceFieldMarshaler(CollectionMarshaler, ATBaseFieldMarshaler):
     def _set(self, value):
         resolved_objects = []
         portal_catalog = api.portal.get_tool('portal_catalog')
-        for uuid in value:
+        for uuid in value or []:
             for brain in portal_catalog.unrestrictedSearchResults(UID=uuid):
                 # noinspection PyProtectedMember
                 resolved_objects.append(brain._unrestrictedGetObject())
