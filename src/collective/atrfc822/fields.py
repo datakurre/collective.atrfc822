@@ -121,12 +121,8 @@ class ATBaseFieldMarshaler(BaseFieldMarshaler):
             return super(ATBaseFieldMarshaler, self).getContentType()
 
 
-@configure.adapter.factory(for_=(Interface, IStringField))
-@configure.adapter.factory(for_=(Interface, ITextField))
 @configure.adapter.factory(for_=(Interface, IIntegerField))
 @configure.adapter.factory(for_=(Interface, IFloatField))
-@configure.adapter.factory(for_=(Interface, TALESString))
-@configure.adapter.factory(for_=(Interface, ZPTField))
 @implementer(IFieldMarshaler)
 class ATFieldMarshaler(BytesFieldMarshaler, ATBaseFieldMarshaler):
     def _query(self, default=None):
@@ -143,6 +139,17 @@ class ATFieldMarshaler(BytesFieldMarshaler, ATBaseFieldMarshaler):
             return value.encode('utf-8')
         else:
             return value
+
+
+@configure.adapter.factory(for_=(Interface, IStringField))
+@configure.adapter.factory(for_=(Interface, ITextField))
+@configure.adapter.factory(for_=(Interface, TALESString))
+@configure.adapter.factory(for_=(Interface, ZPTField))
+@implementer(IFieldMarshaler)
+class ATStringFieldMarshaler(ATFieldMarshaler):
+    def _set(self, value):
+        setter = self.field.getMutator(self.context)
+        setter(value or '')
 
 
 @configure.adapter.factory()
