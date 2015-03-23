@@ -60,10 +60,15 @@ else:
 # initializeObject(ob, iterFields(ob), message)
 
 
-def cloneField(field):
+def cloneField(field, primary=False):
     clone = field.copy()
+    if primary:
+        alsoProvides(clone, IPrimaryField)
     if ILinesField.providedBy(clone):
-        clone.missing_value = list()
+        if primary:
+            alsoProvides(clone, IStringField)
+        else:
+            clone.missing_value = list()
     else:
         clone.missing_value = None
     clone._type = list  # possible sequence type
@@ -76,16 +81,13 @@ def iterFields(ob):
     ob = Acquisition.aq_base(ob)
     primary = ob.getPrimaryField()
     if primary:
-        clone = cloneField(primary)
-        alsoProvides(clone, IPrimaryField)
+        clone = cloneField(primary, primary=True)
         yield clone.__name__, clone
 
     for name in ob.schema.getSchemataNames():
         for field in ob.schema.getSchemataFields(name):
             if primary and primary.__name__ == field.__name__:
                 continue
-
-            clone = cloneField(field)
 
             # Mark 'primary fields', which get marshaled into payload
             if (bool(getattr(field, 'primary', None)) is True
@@ -94,7 +96,9 @@ def iterFields(ob):
                         and not ITextField.providedBy(field))
                     or getattr(field, 'widget', None) == RichWidget
                     or isinstance(field, ZPTField)):
-                alsoProvides(clone, IPrimaryField)
+                clone = cloneField(field, primary=True)
+            else:
+                clone = cloneField(field, primary=False)
 
             yield clone.__name__, clone
 
@@ -220,7 +224,6 @@ class ATFileFieldMarshaler(NamedFileFieldMarshaler, ATBaseFieldMarshaler):
                 value.data, mimetype=value.contentType, filename=filename)
         else:
             super(ATFileFieldMarshaler, self)._set(None)
-
 
 
 @configure.adapter.factory(for_=(Interface, IImageField))
