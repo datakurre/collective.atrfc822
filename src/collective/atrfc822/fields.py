@@ -62,6 +62,11 @@ else:
 
 def cloneField(field, primary=False):
     clone = field.copy()
+
+    clone._type = list  # possible sequence type
+    clone.fromUnicode = lambda x: x
+    clone.missing_value = None
+
     if primary:
         alsoProvides(clone, IPrimaryField)
     if ILinesField.providedBy(clone):
@@ -69,10 +74,7 @@ def cloneField(field, primary=False):
             alsoProvides(clone, IStringField)
         else:
             clone.missing_value = list()
-    else:
-        clone.missing_value = None
-    clone._type = list  # possible sequence type
-    clone.fromUnicode = lambda x: x
+
     return clone
 
 
