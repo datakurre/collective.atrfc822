@@ -267,8 +267,8 @@ class ATImageFieldMarshaler(NamedImageFieldMarshaler, ATBaseFieldMarshaler):
             filename = value.filename
             if not isinstance(filename, str):
                 filename = filename.encode('utf-8')
-            super(ATImageFieldMarshaler, self)._set(
-                value.data, mimetype=value.contentType, filename=filename)
+            setter = self.field.getMutator(self.context)
+            setter(value.data, mimetype=value.contentType, filename=filename)
         else:
             super(ATImageFieldMarshaler, self)._set(None)
 
