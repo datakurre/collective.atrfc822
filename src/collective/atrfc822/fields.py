@@ -55,6 +55,21 @@ else:
     from Products.TemplateFields import ZPTField
 
 
+try:
+    pkg_resources.get_distribution('archetypes.querywidget')
+except pkg_resources.DistributionNotFound:
+    class QueryField(object):
+        """Mock placeholder"""
+else:
+    from archetypes.querywidget.field import IQueryField
+
+
+try:
+    import json
+except ImportError:
+    from simplejson import json
+
+
 # Usage:
 # message = constructMessage(ob, iterFields(ob))
 # initializeObject(ob, iterFields(ob), message)
@@ -281,3 +296,20 @@ class ATReferenceFieldMarshaler(CollectionMarshaler, ATBaseFieldMarshaler):
                 # noinspection PyProtectedMember
                 resolved_objects.append(brain._unrestrictedGetObject())
         super(ATReferenceFieldMarshaler, self)._set(resolved_objects)
+
+
+@configure.adapter.factory()
+@adapter(Interface, IQueryField)
+@implementer(IFieldMarshaler)
+class ATQueryFieldMarshaler(ATBaseFieldMarshaler):
+    def encode(self, value, charset='utf-8', primary=False):
+        if value:
+            return json.dumps(map(dict, value))
+        else:
+            return value
+
+    def decode(self, value, message=None, charset='utf-8',
+               contentType=None, primary=False):
+        if value:
+            value = json.loads(value)
+        return value
