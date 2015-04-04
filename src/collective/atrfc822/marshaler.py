@@ -21,7 +21,6 @@ def marshall(self, instance, **kwargs):
     content_type = message.get_content_type()
     data = to_string(message)
     length = len(data)
-    print data
     return content_type, length, data
 
 
