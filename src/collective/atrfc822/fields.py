@@ -58,7 +58,7 @@ else:
 try:
     pkg_resources.get_distribution('archetypes.querywidget')
 except pkg_resources.DistributionNotFound:
-    class QueryField(object):
+    class IQueryField(object):
         """Mock placeholder"""
 else:
     from archetypes.querywidget.field import IQueryField
