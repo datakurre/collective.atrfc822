@@ -225,7 +225,7 @@ class ATFileFieldMarshaler(NamedFileFieldMarshaler, ATBaseFieldMarshaler):
                 filename = filename.decode('utf-8')
             if isinstance(value.data, Pdata):
                 return self.factory(
-                    value.data.data, value.getContentType(), filename)
+                    bytes(value.data), value.getContentType(), filename)
             else:
                 return self.factory(
                     value.data, value.getContentType(), filename)
@@ -255,7 +255,7 @@ class ATImageFieldMarshaler(NamedImageFieldMarshaler, ATBaseFieldMarshaler):
                 filename = filename.decode('utf-8')
             if isinstance(value.data, Pdata):
                 return self.factory(
-                    value.data.data, value.getContentType(), filename)
+                    bytes(value.data), value.getContentType(), filename)
             else:
                 return self.factory(
                     value.data, value.getContentType(), filename)
