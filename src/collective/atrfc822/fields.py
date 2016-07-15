@@ -237,8 +237,13 @@ class ATFileFieldMarshaler(NamedFileFieldMarshaler, ATBaseFieldMarshaler):
             filename = value.filename
             if not isinstance(filename, str):
                 filename = filename.encode('utf-8')
-            super(ATFileFieldMarshaler, self)._set(
-                value.data, mimetype=value.contentType, filename=filename)
+            try:
+                super(ATFileFieldMarshaler, self)._set(
+                    value.data, mimetype=value.contentType, filename=filename)
+            except TypeError:
+                super(ATFileFieldMarshaler, self)._set(value.data)  # noqa
+                self.context.setContentType(value.contentType)
+                self.context.setFilename(filename)
         else:
             super(ATFileFieldMarshaler, self)._set(None)
 
